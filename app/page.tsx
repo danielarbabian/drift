@@ -11,19 +11,30 @@ import { BackgroundGradients } from '@/components/screensaver/BackgroundGradient
 import { CornerIndicators } from '@/components/screensaver/CornerIndicators';
 import { usePomodoroTimer } from '@/hooks/usePomodoroTimer';
 import { useScreensaverControls } from '@/hooks/useScreensaverControls';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { POMODORO_CONSTANTS } from '@/lib/constants';
 
 export default function OLEDScreensaver() {
   const [time, setTime] = useState(new Date());
   const [showSettings, setShowSettings] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const [use24Hour, setUse24Hour] = useState(true);
   const [isClient, setIsClient] = useState(false);
-  const [enableClockBounce, setEnableClockBounce] = useState(true);
-  const [workDuration, setWorkDuration] = useState(
+
+  // Persisted settings using localStorage
+  const [use24Hour, setUse24Hour] = useLocalStorage(
+    'screensaver-use24Hour',
+    true
+  );
+  const [enableClockBounce, setEnableClockBounce] = useLocalStorage(
+    'screensaver-enableClockBounce',
+    true
+  );
+  const [workDuration, setWorkDuration] = useLocalStorage(
+    'screensaver-workDuration',
     POMODORO_CONSTANTS.WORK_DURATION
   );
-  const [breakDuration, setBreakDuration] = useState(
+  const [breakDuration, setBreakDuration] = useLocalStorage(
+    'screensaver-breakDuration',
     POMODORO_CONSTANTS.BREAK_DURATION
   );
 
