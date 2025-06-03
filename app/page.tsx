@@ -23,6 +23,7 @@ export default function OLEDScreensaver() {
   const [showControls, setShowControls] = useState(false);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [enableClockBounce, setEnableClockBounce] = useState(true);
 
   useEffect(() => {
     setIsClient(true);
@@ -104,8 +105,80 @@ export default function OLEDScreensaver() {
     setIsPaused(false);
   };
 
+  const renderFloatingTime = (timeString: string) => {
+    if (!enableClockBounce) {
+      return timeString;
+    }
+
+    return timeString.split('').map((char, index) => (
+      <span
+        key={index}
+        className="inline-block"
+        style={{
+          animation: `gentle-float-char 35s ease-in-out infinite`,
+          animationDelay: `${index * 0.2}s`,
+        }}
+      >
+        {char}
+      </span>
+    ));
+  };
+
+  const renderFloatingDate = (dateString: string) => {
+    if (!enableClockBounce) {
+      return dateString;
+    }
+
+    return dateString.split('').map((char, index) => (
+      <span
+        key={index}
+        className="inline-block"
+        style={{
+          animation: `gentle-float-char 40s ease-in-out infinite`,
+          animationDelay: `${index * 0.1}s`,
+        }}
+      >
+        {char === ' ' ? '\u00A0' : char}
+      </span>
+    ));
+  };
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">
+      <style jsx global>{`
+        @keyframes gentle-float {
+          0%,
+          100% {
+            transform: translate(0, 0);
+          }
+          25% {
+            transform: translate(15px, -12px);
+          }
+          50% {
+            transform: translate(-10px, 8px);
+          }
+          75% {
+            transform: translate(12px, 5px);
+          }
+        }
+
+        @keyframes gentle-float-char {
+          0%,
+          100% {
+            transform: translate(0, 0);
+          }
+          25% {
+            transform: translate(3px, -2px);
+          }
+          50% {
+            transform: translate(-2px, 2px);
+          }
+          75% {
+            transform: translate(2px, 1px);
+          }
+        }
+      `}</style>
+
       <div className="absolute inset-0 opacity-30">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-blue-900/20 to-teal-900/20 animate-gradient-shift" />
         <div className="absolute inset-0 bg-gradient-to-tl from-indigo-900/20 via-purple-900/20 to-pink-900/20 animate-gradient-shift-reverse" />
@@ -131,16 +204,18 @@ export default function OLEDScreensaver() {
       <div className="absolute inset-0 flex items-center justify-center animate-subtle-shift">
         <div className="text-center">
           <div className="text-6xl md:text-8xl lg:text-9xl font-thin text-white/90 tracking-wider font-mono">
-            {isClient ? formatTime(time) : '00:00:00'}
+            {isClient ? renderFloatingTime(formatTime(time)) : '00:00:00'}
           </div>
           <div className="text-lg md:text-xl text-white/50 mt-4 tracking-widest">
             {isClient
-              ? time.toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })
+              ? renderFloatingDate(
+                  time.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })
+                )
               : 'Loading...'}
           </div>
         </div>
@@ -228,8 +303,14 @@ export default function OLEDScreensaver() {
       </div>
 
       {showSettings && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="bg-black/80 border border-white/10 rounded-2xl p-6 max-w-md w-full animate-fade-in">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setShowSettings(false)}
+        >
+          <div
+            className="bg-black/80 border border-white/10 rounded-2xl p-6 max-w-md w-full animate-fade-in"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl text-white/90 font-medium">Settings</h2>
               <button
@@ -243,12 +324,40 @@ export default function OLEDScreensaver() {
             <div className="space-y-6">
               <div>
                 <h3 className="text-white/70 mb-3 text-sm uppercase tracking-wider">
+                  Clock Animation
+                </h3>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setEnableClockBounce(false)}
+                    className={`px-4 py-2 rounded-lg border text-white ${
+                      !enableClockBounce
+                        ? 'bg-white/20 border-white/30'
+                        : 'bg-black/40 border-white/10'
+                    }`}
+                  >
+                    Static
+                  </button>
+                  <button
+                    onClick={() => setEnableClockBounce(true)}
+                    className={`px-4 py-2 rounded-lg border text-white ${
+                      enableClockBounce
+                        ? 'bg-white/20 border-white/30'
+                        : 'bg-black/40 border-white/10'
+                    }`}
+                  >
+                    Floating
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-white/70 mb-3 text-sm uppercase tracking-wider">
                   Time Format
                 </h3>
                 <div className="flex space-x-3">
                   <button
                     onClick={() => setUse24Hour(false)}
-                    className={`px-4 py-2 rounded-lg border ${
+                    className={`px-4 py-2 rounded-lg border text-white ${
                       !use24Hour
                         ? 'bg-white/20 border-white/30'
                         : 'bg-black/40 border-white/10'
@@ -258,7 +367,7 @@ export default function OLEDScreensaver() {
                   </button>
                   <button
                     onClick={() => setUse24Hour(true)}
-                    className={`px-4 py-2 rounded-lg border ${
+                    className={`px-4 py-2 rounded-lg border text-white ${
                       use24Hour
                         ? 'bg-white/20 border-white/30'
                         : 'bg-black/40 border-white/10'
@@ -302,10 +411,15 @@ export default function OLEDScreensaver() {
         </div>
       )}
 
-      {/* Info Modal */}
       {showInfo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="bg-black/80 border border-white/10 rounded-2xl p-6 max-w-md w-full animate-fade-in">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setShowInfo(false)}
+        >
+          <div
+            className="bg-black/80 border border-white/10 rounded-2xl p-6 max-w-md w-full animate-fade-in"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl text-white/90 font-medium">
                 About This App
@@ -349,7 +463,6 @@ export default function OLEDScreensaver() {
         </div>
       )}
 
-      {/* Subtle Corner Indicators */}
       <div className="absolute top-8 left-8 w-2 h-2 bg-white/20 rounded-full animate-pulse" />
       <div
         className="absolute top-8 right-8 w-2 h-2 bg-white/20 rounded-full animate-pulse"
