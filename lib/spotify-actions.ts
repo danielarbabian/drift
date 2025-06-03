@@ -187,3 +187,74 @@ export async function checkSpotifyConnection() {
   const accessToken = await getSpotifyAccessToken();
   return { isConnected: !!accessToken };
 }
+
+export async function getUserPlaylists() {
+  try {
+    const accessToken = await getSpotifyAccessToken();
+
+    if (!accessToken) {
+      return { success: false, error: 'No access token' };
+    }
+
+    const response = await fetch(
+      'https://api.spotify.com/v1/me/playlists?limit=20',
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (response.status === 200) {
+      const data = await response.json();
+      return { success: true, data: data.items };
+    } else if (response.status === 401) {
+      const refreshResult = await refreshSpotifyToken();
+      if (refreshResult.success) {
+        return getUserPlaylists();
+      }
+      return { success: false, error: 'Authentication failed' };
+    }
+
+    return { success: false, error: 'Failed to fetch playlists' };
+  } catch (error) {
+    console.error('Error fetching playlists:', error);
+    return { success: false, error: 'Fetch failed' };
+  }
+}
+
+export async function playPlaylist(playlistUri: string) {
+  try {
+    const accessToken = await getSpotifyAccessToken();
+
+    if (!accessToken) {
+      return { success: false, error: 'No access token' };
+    }
+
+    const response = await fetch('https://api.spotify.com/v1/me/player/play', {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        context_uri: playlistUri,
+      }),
+    });
+
+    if (response.status === 204 || response.status === 200) {
+      return { success: true };
+    } else if (response.status === 401) {
+      const refreshResult = await refreshSpotifyToken();
+      if (refreshResult.success) {
+        return playPlaylist(playlistUri);
+      }
+      return { success: false, error: 'Authentication failed' };
+    }
+
+    return { success: false, error: 'Failed to start playlist' };
+  } catch (error) {
+    console.error('Error starting playlist:', error);
+    return { success: false, error: 'Play failed' };
+  }
+}

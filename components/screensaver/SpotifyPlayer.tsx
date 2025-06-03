@@ -17,10 +17,13 @@ export function SpotifyPlayer({ showControls }: SpotifyPlayerProps) {
     isConnected,
     currentTrack,
     isLoading,
+    playlists,
+    playlistsLoading,
     login,
     logout,
     togglePlayPause,
     skipTrack,
+    startPlaylist,
   } = useSpotify();
 
   // Show nothing while loading
@@ -60,13 +63,68 @@ export function SpotifyPlayer({ showControls }: SpotifyPlayerProps) {
       <div className="absolute inset-0 pointer-events-none">
         <div className="relative w-full h-full">
           <div className="absolute animate-orbit-reverse">
-            <div className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-2xl px-6 py-4 shadow-2xl pointer-events-auto">
+            <div className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-2xl px-6 py-4 shadow-2xl pointer-events-auto max-w-sm">
               <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
+                <div className="flex items-center justify-center mb-3">
                   <Music className="text-green-400 mr-2" size={20} />
                   <span className="text-white/90 font-medium">Spotify</span>
                 </div>
-                <div className="text-white/60 text-sm">No music playing</div>
+
+                {playlistsLoading ? (
+                  <div className="text-white/60 text-sm">
+                    Loading playlists...
+                  </div>
+                ) : playlists.length > 0 ? (
+                  <div>
+                    <div className="text-white/60 text-xs mb-3 uppercase tracking-wider">
+                      Your Playlists
+                    </div>
+                    <div className="max-h-48 overflow-y-auto space-y-2">
+                      {playlists.slice(0, 8).map((playlist) => (
+                        <button
+                          key={playlist.id}
+                          onClick={async () => {
+                            console.log(
+                              'Clicking playlist:',
+                              playlist.name,
+                              playlist.uri
+                            );
+                            try {
+                              await startPlaylist(playlist.uri);
+                              console.log('Started playlist successfully');
+                            } catch (error) {
+                              console.error('Error starting playlist:', error);
+                            }
+                          }}
+                          className="w-full text-left p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center gap-3">
+                            {playlist.images[0] && (
+                              <img
+                                src={playlist.images[0].url}
+                                alt={playlist.name}
+                                className="w-8 h-8 rounded object-cover"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="text-white/90 text-sm font-medium truncate">
+                                {playlist.name}
+                              </div>
+                              <div className="text-white/50 text-xs">
+                                {playlist.tracks.total} tracks
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-white/60 text-sm">
+                    No playlists found
+                  </div>
+                )}
+
                 <div
                   className={`mt-3 flex justify-center transition-opacity duration-300 ${
                     showControls ? 'opacity-100' : 'opacity-0'

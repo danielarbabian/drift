@@ -5,6 +5,8 @@ import {
   fetchCurrentTrack,
   controlPlayback,
   checkSpotifyConnection,
+  getUserPlaylists,
+  playPlaylist,
 } from '@/lib/spotify-actions';
 
 interface SpotifyTrack {
@@ -24,10 +26,20 @@ interface SpotifyPlayerState {
   item: SpotifyTrack | null;
 }
 
+interface SpotifyPlaylist {
+  id: string;
+  name: string;
+  uri: string;
+  images: { url: string; width: number; height: number }[];
+  tracks: {
+    total: number;
+  };
+}
+
 const SPOTIFY_CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
 const SPOTIFY_REDIRECT_URI = process.env.NEXT_PUBLIC_SPOTIFY_REDIRECT_URI;
 const SPOTIFY_SCOPES =
-  'user-read-playback-state user-modify-playback-state user-read-currently-playing';
+  'user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative';
 
 export function useSpotify() {
   const [currentTrack, setCurrentTrack] = useState<SpotifyPlayerState | null>(
@@ -35,6 +47,8 @@ export function useSpotify() {
   );
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([]);
+  const [playlistsLoading, setPlaylistsLoading] = useState(false);
 
   useEffect(() => {
     const checkConnection = async () => {
@@ -79,6 +93,43 @@ export function useSpotify() {
     }
   }, [isConnected, isLoading]);
 
+  const fetchPlaylists = useCallback(async () => {
+    if (!isConnected) return;
+
+    setPlaylistsLoading(true);
+    try {
+      const result = await getUserPlaylists();
+      if (result.success) {
+        setPlaylists(result.data);
+      } else if (result.error === 'Authentication failed') {
+        setIsConnected(false);
+      }
+    } catch (error) {
+      console.error('Error fetching playlists:', error);
+    } finally {
+      setPlaylistsLoading(false);
+    }
+  }, [isConnected]);
+
+  const startPlaylist = useCallback(
+    async (playlistUri: string) => {
+      if (!isConnected) return;
+
+      try {
+        const result = await playPlaylist(playlistUri);
+        if (result.success) {
+          setTimeout(refreshCurrentTrack, 1000);
+        } else if (result.error === 'Authentication failed') {
+          setIsConnected(false);
+          setCurrentTrack(null);
+        }
+      } catch (error) {
+        console.error('Error starting playlist:', error);
+      }
+    },
+    [isConnected]
+  );
+
   const login = useCallback(() => {
     const authUrl = new URL('https://accounts.spotify.com/authorize');
     authUrl.searchParams.append('response_type', 'code');
@@ -94,6 +145,7 @@ export function useSpotify() {
       await clearSpotifyTokens();
       setIsConnected(false);
       setCurrentTrack(null);
+      setPlaylists([]);
     } catch (error) {
       console.error('Error logging out:', error);
     }
@@ -161,13 +213,23 @@ export function useSpotify() {
     return () => clearInterval(interval);
   }, [isConnected, refreshCurrentTrack]);
 
+  useEffect(() => {
+    if (isConnected) {
+      fetchPlaylists();
+    }
+  }, [isConnected, fetchPlaylists]);
+
   return {
     isConnected,
     currentTrack,
     isLoading,
+    playlists,
+    playlistsLoading,
     login,
     logout,
     togglePlayPause,
     skipTrack,
+    fetchPlaylists,
+    startPlaylist,
   };
 }
