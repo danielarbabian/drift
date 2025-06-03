@@ -223,7 +223,7 @@ export async function getUserPlaylists() {
   }
 }
 
-export async function playPlaylist(playlistUri: string) {
+export async function playPlaylist(playlistUri: string, deviceId?: string) {
   try {
     const accessToken = await getSpotifyAccessToken();
 
@@ -231,15 +231,22 @@ export async function playPlaylist(playlistUri: string) {
       return { success: false, error: 'No access token' };
     }
 
-    const response = await fetch('https://api.spotify.com/v1/me/player/play', {
+    const body = {
+      context_uri: playlistUri,
+    };
+
+    let url = 'https://api.spotify.com/v1/me/player/play';
+    if (deviceId) {
+      url += `?device_id=${deviceId}`;
+    }
+
+    const response = await fetch(url, {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        context_uri: playlistUri,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (response.status === 204 || response.status === 200) {
@@ -247,14 +254,31 @@ export async function playPlaylist(playlistUri: string) {
     } else if (response.status === 401) {
       const refreshResult = await refreshSpotifyToken();
       if (refreshResult.success) {
-        return playPlaylist(playlistUri);
+        return playPlaylist(playlistUri, deviceId);
       }
       return { success: false, error: 'Authentication failed' };
-    }
+    } else if (response.status === 404) {
+      return { success: false, error: 'No active device' };
+    } else {
+      const errorData = await response.text();
+      if (response.status === 403 && errorData.includes('Premium required')) {
+        return {
+          success: false,
+          error: 'Failed to start playlist: 403 Premium required',
+        };
+      }
 
-    return { success: false, error: 'Failed to start playlist' };
+      return {
+        success: false,
+        error: `Failed to start playlist: ${response.status}`,
+      };
+    }
   } catch (error) {
     console.error('Error starting playlist:', error);
     return { success: false, error: 'Play failed' };
   }
+}
+
+export async function getSpotifyAccessTokenForClient() {
+  return await getSpotifyAccessToken();
 }

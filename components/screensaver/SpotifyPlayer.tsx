@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   Play,
   Pause,
@@ -12,13 +13,15 @@ interface SpotifyPlayerProps {
   showControls: boolean;
 }
 
-export function SpotifyPlayer({ showControls }: SpotifyPlayerProps) {
+function SpotifyPlayerComponent({ showControls }: SpotifyPlayerProps) {
   const {
     isConnected,
     currentTrack,
     isLoading,
     playlists,
     playlistsLoading,
+    webPlayerReady,
+    isPremiumRequired,
     login,
     logout,
     togglePlayPause,
@@ -26,12 +29,10 @@ export function SpotifyPlayer({ showControls }: SpotifyPlayerProps) {
     startPlaylist,
   } = useSpotify();
 
-  // Show nothing while loading
   if (isLoading) {
     return null;
   }
 
-  // If not connected, show login button
   if (!isConnected) {
     return (
       <div className="absolute inset-0 pointer-events-none">
@@ -57,7 +58,6 @@ export function SpotifyPlayer({ showControls }: SpotifyPlayerProps) {
     );
   }
 
-  // If connected but no track playing
   if (!currentTrack?.item) {
     return (
       <div className="absolute inset-0 pointer-events-none">
@@ -68,7 +68,30 @@ export function SpotifyPlayer({ showControls }: SpotifyPlayerProps) {
                 <div className="flex items-center justify-center mb-3">
                   <Music className="text-green-400 mr-2" size={20} />
                   <span className="text-white/90 font-medium">Spotify</span>
+                  {webPlayerReady && (
+                    <div
+                      className="ml-2 w-2 h-2 bg-green-400 rounded-full animate-pulse"
+                      title="Web Player Ready"
+                    />
+                  )}
                 </div>
+
+                {isPremiumRequired ? (
+                  <div className="mb-3">
+                    <div className="text-orange-400 text-xs mb-1 font-medium">
+                      Premium Required
+                    </div>
+                    <div className="text-white/60 text-xs mb-3 leading-tight">
+                      Play in Spotify app, use controls to switch playlists
+                    </div>
+                  </div>
+                ) : (
+                  !webPlayerReady && (
+                    <div className="text-white/60 text-xs mb-3">
+                      Initializing web player...
+                    </div>
+                  )
+                )}
 
                 {playlistsLoading ? (
                   <div className="text-white/60 text-sm">
@@ -78,25 +101,29 @@ export function SpotifyPlayer({ showControls }: SpotifyPlayerProps) {
                   <div>
                     <div className="text-white/60 text-xs mb-3 uppercase tracking-wider">
                       Your Playlists
+                      {webPlayerReady &&
+                        !isPremiumRequired &&
+                        ' • Ready to Play'}
+                      {isPremiumRequired && ' • Controls Only'}
                     </div>
                     <div className="max-h-48 overflow-y-auto space-y-2">
                       {playlists.slice(0, 8).map((playlist) => (
                         <button
                           key={playlist.id}
                           onClick={async () => {
-                            console.log(
-                              'Clicking playlist:',
-                              playlist.name,
-                              playlist.uri
-                            );
-                            try {
-                              await startPlaylist(playlist.uri);
-                              console.log('Started playlist successfully');
-                            } catch (error) {
-                              console.error('Error starting playlist:', error);
-                            }
+                            await startPlaylist(playlist.uri);
                           }}
-                          className="w-full text-left p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                          disabled={!webPlayerReady && !isPremiumRequired}
+                          className={`w-full text-left p-2 rounded-lg transition-colors cursor-pointer ${
+                            webPlayerReady || isPremiumRequired
+                              ? 'bg-white/5 hover:bg-white/10'
+                              : 'bg-white/5 opacity-50 cursor-not-allowed'
+                          }`}
+                          title={
+                            isPremiumRequired
+                              ? 'Will switch to this playlist on your active Spotify device'
+                              : undefined
+                          }
                         >
                           <div className="flex items-center gap-3">
                             {playlist.images[0] && (
@@ -170,7 +197,6 @@ export function SpotifyPlayer({ showControls }: SpotifyPlayerProps) {
         <div className="absolute animate-orbit-reverse">
           <div className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-2xl px-6 py-4 shadow-2xl pointer-events-auto max-w-xs">
             <div className="text-center">
-              {/* Album Art */}
               {track.album.images[0] && (
                 <div className="w-16 h-16 mx-auto mb-3 rounded-lg overflow-hidden">
                   <img
@@ -181,7 +207,6 @@ export function SpotifyPlayer({ showControls }: SpotifyPlayerProps) {
                 </div>
               )}
 
-              {/* Track Info */}
               <div className="mb-3">
                 <div className="text-white/90 font-medium text-sm leading-tight">
                   {truncateText(track.name, 25)}
@@ -194,7 +219,6 @@ export function SpotifyPlayer({ showControls }: SpotifyPlayerProps) {
                 </div>
               </div>
 
-              {/* Progress Bar */}
               <div className="mb-3">
                 <div className="w-full bg-white/10 rounded-full h-1">
                   <div
@@ -213,7 +237,6 @@ export function SpotifyPlayer({ showControls }: SpotifyPlayerProps) {
                 </div>
               </div>
 
-              {/* Controls */}
               <div
                 className={`flex justify-center space-x-3 transition-opacity duration-300 ${
                   showControls ? 'opacity-100' : 'opacity-0'
@@ -255,3 +278,5 @@ export function SpotifyPlayer({ showControls }: SpotifyPlayerProps) {
     </div>
   );
 }
+
+export const SpotifyPlayer = memo(SpotifyPlayerComponent);

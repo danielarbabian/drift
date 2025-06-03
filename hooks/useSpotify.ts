@@ -7,7 +7,9 @@ import {
   checkSpotifyConnection,
   getUserPlaylists,
   playPlaylist,
+  getSpotifyAccessTokenForClient,
 } from '@/lib/spotify-actions';
+import { useSpotifyWebPlayer } from './useSpotifyWebPlayer';
 
 interface SpotifyTrack {
   id: string;
@@ -39,7 +41,7 @@ interface SpotifyPlaylist {
 const SPOTIFY_CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
 const SPOTIFY_REDIRECT_URI = process.env.NEXT_PUBLIC_SPOTIFY_REDIRECT_URI;
 const SPOTIFY_SCOPES =
-  'user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative';
+  'user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative streaming user-read-email user-read-private';
 
 export function useSpotify() {
   const [currentTrack, setCurrentTrack] = useState<SpotifyPlayerState | null>(
@@ -49,12 +51,28 @@ export function useSpotify() {
   const [isLoading, setIsLoading] = useState(true);
   const [playlists, setPlaylists] = useState<SpotifyPlaylist[]>([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(false);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [apiPremiumRequired, setApiPremiumRequired] = useState(false);
+
+  const {
+    deviceId,
+    isReady,
+    isPremiumRequired: webPlayerPremiumRequired,
+  } = useSpotifyWebPlayer(accessToken);
+
+  // Combined premium requirement from both Web Player and API
+  const isPremiumRequired = webPlayerPremiumRequired || apiPremiumRequired;
 
   useEffect(() => {
     const checkConnection = async () => {
       try {
         const result = await checkSpotifyConnection();
         setIsConnected(result.isConnected);
+
+        if (result.isConnected) {
+          const token = await getSpotifyAccessTokenForClient();
+          setAccessToken(token);
+        }
       } catch (error) {
         console.error('Error checking Spotify connection:', error);
         setIsConnected(false);
@@ -76,6 +94,8 @@ export function useSpotify() {
           const result = await exchangeSpotifyCode(code);
           if (result.success) {
             setIsConnected(true);
+            const token = await getSpotifyAccessTokenForClient();
+            setAccessToken(token);
             window.history.replaceState(
               {},
               document.title,
@@ -111,41 +131,13 @@ export function useSpotify() {
     }
   }, [isConnected]);
 
-  const startPlaylist = useCallback(
-    async (playlistUri: string) => {
-      if (!isConnected) return;
-
-      try {
-        const result = await playPlaylist(playlistUri);
-        if (result.success) {
-          setTimeout(refreshCurrentTrack, 1000);
-        } else if (result.error === 'Authentication failed') {
-          setIsConnected(false);
-          setCurrentTrack(null);
-        }
-      } catch (error) {
-        console.error('Error starting playlist:', error);
-      }
-    },
-    [isConnected]
-  );
-
-  const login = useCallback(() => {
-    const authUrl = new URL('https://accounts.spotify.com/authorize');
-    authUrl.searchParams.append('response_type', 'code');
-    authUrl.searchParams.append('client_id', SPOTIFY_CLIENT_ID || '');
-    authUrl.searchParams.append('scope', SPOTIFY_SCOPES);
-    authUrl.searchParams.append('redirect_uri', SPOTIFY_REDIRECT_URI || '');
-
-    window.location.href = authUrl.toString();
-  }, []);
-
   const logout = useCallback(async () => {
     try {
       await clearSpotifyTokens();
       setIsConnected(false);
       setCurrentTrack(null);
       setPlaylists([]);
+      setAccessToken(null);
     } catch (error) {
       console.error('Error logging out:', error);
     }
@@ -166,6 +158,48 @@ export function useSpotify() {
       console.error('Error fetching current track:', error);
     }
   }, [isConnected]);
+
+  const startPlaylist = useCallback(
+    async (playlistUri: string) => {
+      if (!isConnected) return { success: false, error: 'Not connected' };
+
+      try {
+        const result = await playPlaylist(playlistUri, deviceId || undefined);
+        if (result.success) {
+          setTimeout(refreshCurrentTrack, 2000);
+          return { success: true };
+        } else if (result.error === 'Authentication failed') {
+          setIsConnected(false);
+          setCurrentTrack(null);
+          return { success: false, error: result.error };
+        } else if (result.error === 'No active device') {
+          return { success: false, error: result.error };
+        } else if (
+          result.error?.includes('403') &&
+          result.error?.includes('Premium')
+        ) {
+          setApiPremiumRequired(true);
+          return { success: false, error: 'Premium required' };
+        } else {
+          return { success: false, error: result.error };
+        }
+      } catch (error) {
+        console.error('Error starting playlist:', error);
+        return { success: false, error: 'Network error' };
+      }
+    },
+    [isConnected, deviceId, refreshCurrentTrack]
+  );
+
+  const login = useCallback(() => {
+    const authUrl = new URL('https://accounts.spotify.com/authorize');
+    authUrl.searchParams.append('response_type', 'code');
+    authUrl.searchParams.append('client_id', SPOTIFY_CLIENT_ID || '');
+    authUrl.searchParams.append('scope', SPOTIFY_SCOPES);
+    authUrl.searchParams.append('redirect_uri', SPOTIFY_REDIRECT_URI || '');
+
+    window.location.href = authUrl.toString();
+  }, []);
 
   const togglePlayPause = useCallback(async () => {
     if (!isConnected || !currentTrack) return;
@@ -225,6 +259,8 @@ export function useSpotify() {
     isLoading,
     playlists,
     playlistsLoading,
+    webPlayerReady: isReady,
+    isPremiumRequired,
     login,
     logout,
     togglePlayPause,
