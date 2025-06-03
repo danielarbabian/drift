@@ -67,7 +67,7 @@ export function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-black/90 border-white/20 text-white rounded-2xl">
+      <DialogContent className="max-w-md bg-black/90 border-white/20 text-white !rounded-2xl p-4">
         <DialogHeader>
           <DialogTitle className="text-xl text-white/90 font-medium">
             Settings

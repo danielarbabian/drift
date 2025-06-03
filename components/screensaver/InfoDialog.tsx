@@ -13,7 +13,7 @@ interface InfoDialogProps {
 export function InfoDialog({ open, onOpenChange }: InfoDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-black/80 border-white/10 text-white">
+      <DialogContent className="max-w-md bg-black/80 border-white/10 text-white !rounded-2xl p-4">
         <DialogHeader>
           <DialogTitle className="text-xl text-white/90 font-medium">
             About This App
