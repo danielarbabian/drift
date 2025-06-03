@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Clock } from '@/components/screensaver/Clock';
 import { FloatingParticles } from '@/components/screensaver/FloatingParticles';
 import { PomodoroTimer } from '@/components/screensaver/PomodoroTimer';
+import { SpotifyPlayer } from '@/components/screensaver/SpotifyPlayer';
 import { SettingsDialog } from '@/components/screensaver/SettingsDialog';
 import { InfoDialog } from '@/components/screensaver/InfoDialog';
 import { ControlButtons } from '@/components/screensaver/ControlButtons';
@@ -20,7 +21,6 @@ export default function OLEDScreensaver() {
   const [showInfo, setShowInfo] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
-  // Persisted settings using localStorage
   const [use24Hour, setUse24Hour] = useLocalStorage(
     'screensaver-use24Hour',
     true
@@ -37,8 +37,17 @@ export default function OLEDScreensaver() {
     'screensaver-breakDuration',
     POMODORO_CONSTANTS.BREAK_DURATION
   );
+  const [showSpotifyPlayer, setShowSpotifyPlayer] = useLocalStorage(
+    'screensaver-showSpotifyPlayer',
+    true
+  );
+  const [showPomodoroTimer, setShowPomodoroTimer] = useLocalStorage(
+    'screensaver-showPomodoroTimer',
+    true
+  );
 
-  const { showControls } = useScreensaverControls();
+  const { showControls, isFullscreen, toggleFullscreen } =
+    useScreensaverControls();
   const { pomodoroTime, isBreak, cycle, isPaused, resetPomodoro, togglePause } =
     usePomodoroTimer({
       workDuration,
@@ -90,22 +99,28 @@ export default function OLEDScreensaver() {
         enableClockBounce={enableClockBounce}
       />
 
-      <PomodoroTimer
-        pomodoroTime={pomodoroTime}
-        isBreak={isBreak}
-        cycle={cycle}
-        isPaused={isPaused}
-        showControls={showControls}
-        workDuration={workDuration}
-        breakDuration={breakDuration}
-        onPauseToggle={togglePause}
-        onReset={resetPomodoro}
-      />
+      {showPomodoroTimer && (
+        <PomodoroTimer
+          pomodoroTime={pomodoroTime}
+          isBreak={isBreak}
+          cycle={cycle}
+          isPaused={isPaused}
+          showControls={showControls}
+          workDuration={workDuration}
+          breakDuration={breakDuration}
+          onPauseToggle={togglePause}
+          onReset={resetPomodoro}
+        />
+      )}
+
+      {showSpotifyPlayer && <SpotifyPlayer showControls={showControls} />}
 
       <ControlButtons
         showControls={showControls}
+        isFullscreen={isFullscreen}
         onSettingsClick={handleSettingsClick}
         onInfoClick={handleInfoClick}
+        onFullscreenToggle={toggleFullscreen}
       />
 
       <SettingsDialog
@@ -119,6 +134,10 @@ export default function OLEDScreensaver() {
         setWorkDuration={setWorkDuration}
         breakDuration={breakDuration}
         setBreakDuration={setBreakDuration}
+        showSpotifyPlayer={showSpotifyPlayer}
+        setShowSpotifyPlayer={setShowSpotifyPlayer}
+        showPomodoroTimer={showPomodoroTimer}
+        setShowPomodoroTimer={setShowPomodoroTimer}
       />
 
       <InfoDialog open={showInfo} onOpenChange={setShowInfo} />

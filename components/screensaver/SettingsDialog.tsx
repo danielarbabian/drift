@@ -13,6 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -25,6 +27,10 @@ interface SettingsDialogProps {
   setWorkDuration: (duration: number) => void;
   breakDuration: number;
   setBreakDuration: (duration: number) => void;
+  showSpotifyPlayer: boolean;
+  setShowSpotifyPlayer: (show: boolean) => void;
+  showPomodoroTimer: boolean;
+  setShowPomodoroTimer: (show: boolean) => void;
 }
 
 export function SettingsDialog({
@@ -38,6 +44,10 @@ export function SettingsDialog({
   setWorkDuration,
   breakDuration,
   setBreakDuration,
+  showSpotifyPlayer,
+  setShowSpotifyPlayer,
+  showPomodoroTimer,
+  setShowPomodoroTimer,
 }: SettingsDialogProps) {
   const handleWorkDurationChange = (value: string) => {
     setWorkDuration(parseInt(value) * 60);
@@ -193,6 +203,40 @@ export function SettingsDialog({
                     </SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-white/70 mb-3 text-sm uppercase tracking-wider">
+              Floating Elements
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label
+                  htmlFor="spotify-toggle"
+                  className="text-white/80 text-sm"
+                >
+                  Spotify Player
+                </Label>
+                <Switch
+                  id="spotify-toggle"
+                  checked={showSpotifyPlayer}
+                  onCheckedChange={setShowSpotifyPlayer}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label
+                  htmlFor="pomodoro-toggle"
+                  className="text-white/80 text-sm"
+                >
+                  Pomodoro Timer
+                </Label>
+                <Switch
+                  id="pomodoro-toggle"
+                  checked={showPomodoroTimer}
+                  onCheckedChange={setShowPomodoroTimer}
+                />
               </div>
             </div>
           </div>

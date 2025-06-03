@@ -3,6 +3,7 @@ import { POMODORO_CONSTANTS } from '@/lib/constants';
 
 export function useScreensaverControls() {
   const [showControls, setShowControls] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const mouseTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const handleMouseMove = useCallback((): void => {
@@ -15,28 +16,44 @@ export function useScreensaverControls() {
     }, POMODORO_CONSTANTS.CONTROLS_HIDE_DELAY);
   }, []);
 
-  const enterFullscreen = useCallback(() => {
-    if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen().catch(() => {});
+  const toggleFullscreen = useCallback(() => {
+    if (!isFullscreen) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement
+          .requestFullscreen()
+          .then(() => {
+            setIsFullscreen(true);
+          })
+          .catch(() => {});
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document
+          .exitFullscreen()
+          .then(() => {
+            setIsFullscreen(false);
+          })
+          .catch(() => {});
+      }
     }
-  }, []);
+  }, [isFullscreen]);
 
   useEffect(() => {
-    const timeoutId = setTimeout(
-      enterFullscreen,
-      POMODORO_CONSTANTS.FULLSCREEN_DELAY
-    );
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
 
     document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
 
     return () => {
-      clearTimeout(timeoutId);
       document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
       if (mouseTimeoutRef.current) {
         clearTimeout(mouseTimeoutRef.current);
       }
     };
-  }, [handleMouseMove, enterFullscreen]);
+  }, [handleMouseMove]);
 
-  return { showControls };
+  return { showControls, isFullscreen, toggleFullscreen };
 }
