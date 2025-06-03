@@ -20,10 +20,19 @@ export default function OLEDScreensaver() {
   const [use24Hour, setUse24Hour] = useState(true);
   const [isClient, setIsClient] = useState(false);
   const [enableClockBounce, setEnableClockBounce] = useState(true);
+  const [workDuration, setWorkDuration] = useState(
+    POMODORO_CONSTANTS.WORK_DURATION
+  );
+  const [breakDuration, setBreakDuration] = useState(
+    POMODORO_CONSTANTS.BREAK_DURATION
+  );
 
   const { showControls } = useScreensaverControls();
   const { pomodoroTime, isBreak, cycle, isPaused, resetPomodoro, togglePause } =
-    usePomodoroTimer();
+    usePomodoroTimer({
+      workDuration,
+      breakDuration,
+    });
 
   useEffect(() => {
     setIsClient(true);
@@ -76,6 +85,8 @@ export default function OLEDScreensaver() {
         cycle={cycle}
         isPaused={isPaused}
         showControls={showControls}
+        workDuration={workDuration}
+        breakDuration={breakDuration}
         onPauseToggle={togglePause}
         onReset={resetPomodoro}
       />
@@ -93,6 +104,10 @@ export default function OLEDScreensaver() {
         setEnableClockBounce={setEnableClockBounce}
         use24Hour={use24Hour}
         setUse24Hour={setUse24Hour}
+        workDuration={workDuration}
+        setWorkDuration={setWorkDuration}
+        breakDuration={breakDuration}
+        setBreakDuration={setBreakDuration}
       />
 
       <InfoDialog open={showInfo} onOpenChange={setShowInfo} />

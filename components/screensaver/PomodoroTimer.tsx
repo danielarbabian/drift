@@ -6,6 +6,8 @@ interface PomodoroTimerProps {
   cycle: number;
   isPaused: boolean;
   showControls: boolean;
+  workDuration: number;
+  breakDuration: number;
   onPauseToggle: () => void;
   onReset: () => void;
 }
@@ -16,6 +18,8 @@ export function PomodoroTimer({
   cycle,
   isPaused,
   showControls,
+  workDuration,
+  breakDuration,
   onPauseToggle,
   onReset,
 }: PomodoroTimerProps) {
@@ -26,6 +30,10 @@ export function PomodoroTimer({
       .toString()
       .padStart(2, '0')}`;
   };
+
+  const currentDuration = isBreak ? breakDuration : workDuration;
+  const progressPercentage =
+    ((currentDuration - pomodoroTime) / currentDuration) * 100;
 
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -46,11 +54,7 @@ export function PomodoroTimer({
                     isBreak ? 'bg-green-400/70' : 'bg-red-400/70'
                   }`}
                   style={{
-                    width: `${
-                      (((isBreak ? 5 * 60 : 25 * 60) - pomodoroTime) /
-                        (isBreak ? 5 * 60 : 25 * 60)) *
-                      100
-                    }%`,
+                    width: `${Math.max(0, Math.min(100, progressPercentage))}%`,
                   }}
                 />
               </div>

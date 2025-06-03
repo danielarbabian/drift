@@ -21,6 +21,10 @@ interface SettingsDialogProps {
   setEnableClockBounce: (enabled: boolean) => void;
   use24Hour: boolean;
   setUse24Hour: (use24Hour: boolean) => void;
+  workDuration: number;
+  setWorkDuration: (duration: number) => void;
+  breakDuration: number;
+  setBreakDuration: (duration: number) => void;
 }
 
 export function SettingsDialog({
@@ -30,7 +34,19 @@ export function SettingsDialog({
   setEnableClockBounce,
   use24Hour,
   setUse24Hour,
+  workDuration,
+  setWorkDuration,
+  breakDuration,
+  setBreakDuration,
 }: SettingsDialogProps) {
+  const handleWorkDurationChange = (value: string) => {
+    setWorkDuration(parseInt(value) * 60);
+  };
+
+  const handleBreakDurationChange = (value: string) => {
+    setBreakDuration(parseInt(value) * 60);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md bg-black/80 border-white/10 text-white">
@@ -110,32 +126,35 @@ export function SettingsDialog({
                 <label className="text-white/60 text-sm block mb-1">
                   Work Duration
                 </label>
-                <Select defaultValue="25">
+                <Select
+                  value={String(workDuration / 60)}
+                  onValueChange={handleWorkDurationChange}
+                >
                   <SelectTrigger className="bg-black/40 border-white/10 text-white/80">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-black/80 border-white/10">
                     <SelectItem
-                      value="25"
-                      className="text-white focus:bg-white/10"
-                    >
-                      25 minutes
-                    </SelectItem>
-                    <SelectItem
                       value="20"
-                      className="text-white focus:bg-white/10"
+                      className="text-white focus:bg-white/20 focus:text-white data-[highlighted]:bg-white/20 data-[highlighted]:text-white"
                     >
                       20 minutes
                     </SelectItem>
                     <SelectItem
+                      value="25"
+                      className="text-white focus:bg-white/20 focus:text-white data-[highlighted]:bg-white/20 data-[highlighted]:text-white"
+                    >
+                      25 minutes
+                    </SelectItem>
+                    <SelectItem
                       value="30"
-                      className="text-white focus:bg-white/10"
+                      className="text-white focus:bg-white/20 focus:text-white data-[highlighted]:bg-white/20 data-[highlighted]:text-white"
                     >
                       30 minutes
                     </SelectItem>
                     <SelectItem
                       value="45"
-                      className="text-white focus:bg-white/10"
+                      className="text-white focus:bg-white/20 focus:text-white data-[highlighted]:bg-white/20 data-[highlighted]:text-white"
                     >
                       45 minutes
                     </SelectItem>
@@ -146,26 +165,29 @@ export function SettingsDialog({
                 <label className="text-white/60 text-sm block mb-1">
                   Break Duration
                 </label>
-                <Select defaultValue="5">
+                <Select
+                  value={String(breakDuration / 60)}
+                  onValueChange={handleBreakDurationChange}
+                >
                   <SelectTrigger className="bg-black/40 border-white/10 text-white/80">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-black/80 border-white/10">
                     <SelectItem
                       value="5"
-                      className="text-white focus:bg-white/10"
+                      className="text-white focus:bg-white/20 focus:text-white data-[highlighted]:bg-white/20 data-[highlighted]:text-white"
                     >
                       5 minutes
                     </SelectItem>
                     <SelectItem
                       value="10"
-                      className="text-white focus:bg-white/10"
+                      className="text-white focus:bg-white/20 focus:text-white data-[highlighted]:bg-white/20 data-[highlighted]:text-white"
                     >
                       10 minutes
                     </SelectItem>
                     <SelectItem
                       value="15"
-                      className="text-white focus:bg-white/10"
+                      className="text-white focus:bg-white/20 focus:text-white data-[highlighted]:bg-white/20 data-[highlighted]:text-white"
                     >
                       15 minutes
                     </SelectItem>
