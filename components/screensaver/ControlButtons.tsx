@@ -1,4 +1,4 @@
-import { Settings, Info, Maximize, Minimize } from 'lucide-react';
+import { Settings, Info, Maximize, Minimize, Github } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ControlButtonsProps {
@@ -16,6 +16,10 @@ export function ControlButtons({
   onInfoClick,
   onFullscreenToggle,
 }: ControlButtonsProps) {
+  const handleGitHubClick = () => {
+    window.open('https://github.com/danielarbabian/drift', '_blank');
+  };
+
   return (
     <>
       <div
@@ -57,6 +61,14 @@ export function ControlButtons({
           className="p-2 rounded-full bg-black/40 hover:bg-black/60 border border-white/10 transition-colors"
         >
           <Info size={18} className="text-white/70" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleGitHubClick}
+          className="p-2 rounded-full bg-black/40 hover:bg-black/60 border border-white/10 transition-colors"
+        >
+          <Github size={18} className="text-white/70" />
         </Button>
       </div>
     </>

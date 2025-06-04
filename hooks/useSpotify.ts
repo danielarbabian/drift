@@ -60,7 +60,6 @@ export function useSpotify() {
     isPremiumRequired: webPlayerPremiumRequired,
   } = useSpotifyWebPlayer(accessToken);
 
-  // Combined premium requirement from both Web Player and API
   const isPremiumRequired = webPlayerPremiumRequired || apiPremiumRequired;
 
   useEffect(() => {
@@ -138,10 +137,27 @@ export function useSpotify() {
       setCurrentTrack(null);
       setPlaylists([]);
       setAccessToken(null);
+
+      if (accessToken) {
+        try {
+          await fetch('https://accounts.spotify.com/api/token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              token: accessToken,
+              token_type_hint: 'access_token',
+            }),
+          });
+        } catch (error) {
+          // ignore revoke errors as tokens are already cleared locally
+        }
+      }
     } catch (error) {
       console.error('Error logging out:', error);
     }
-  }, []);
+  }, [accessToken]);
 
   const refreshCurrentTrack = useCallback(async () => {
     if (!isConnected) return;
@@ -197,6 +213,7 @@ export function useSpotify() {
     authUrl.searchParams.append('client_id', SPOTIFY_CLIENT_ID || '');
     authUrl.searchParams.append('scope', SPOTIFY_SCOPES);
     authUrl.searchParams.append('redirect_uri', SPOTIFY_REDIRECT_URI || '');
+    authUrl.searchParams.append('show_dialog', 'true');
 
     window.location.href = authUrl.toString();
   }, []);
