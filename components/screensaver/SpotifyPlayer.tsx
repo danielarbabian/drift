@@ -100,50 +100,55 @@ function SpotifyPlayerComponent({ showControls }: SpotifyPlayerProps) {
                 ) : playlists.length > 0 ? (
                   <div>
                     <div className="text-white/60 text-xs mb-3 uppercase tracking-wider">
-                      Your Playlists
+                      Your Playlists ({playlists.length})
                       {webPlayerReady &&
                         !isPremiumRequired &&
                         ' • Ready to Play'}
                       {isPremiumRequired && ' • Controls Only'}
                     </div>
-                    <div className="max-h-48 overflow-y-auto space-y-2">
-                      {playlists.slice(0, 8).map((playlist) => (
-                        <button
-                          key={playlist.id}
-                          onClick={async () => {
-                            await startPlaylist(playlist.uri);
-                          }}
-                          disabled={!webPlayerReady && !isPremiumRequired}
-                          className={`w-full text-left p-2 rounded-lg transition-colors cursor-pointer ${
-                            webPlayerReady || isPremiumRequired
-                              ? 'bg-white/5 hover:bg-white/10'
-                              : 'bg-white/5 opacity-50 cursor-not-allowed'
-                          }`}
-                          title={
-                            isPremiumRequired
-                              ? 'Will switch to this playlist on your active Spotify device'
-                              : undefined
-                          }
-                        >
-                          <div className="flex items-center gap-3">
-                            {playlist.images[0] && (
-                              <img
-                                src={playlist.images[0].url}
-                                alt={playlist.name}
-                                className="w-8 h-8 rounded object-cover"
-                              />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="text-white/90 text-sm font-medium truncate">
-                                {playlist.name}
-                              </div>
-                              <div className="text-white/50 text-xs">
-                                {playlist.tracks.total} tracks
+                    <div className="relative">
+                      <div className="max-h-52 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent hover:scrollbar-thumb-white/30">
+                        {playlists.map((playlist) => (
+                          <button
+                            key={playlist.id}
+                            onClick={async () => {
+                              await startPlaylist(playlist.uri);
+                            }}
+                            disabled={!webPlayerReady && !isPremiumRequired}
+                            className={`w-full text-left p-2 rounded-lg transition-colors cursor-pointer ${
+                              webPlayerReady || isPremiumRequired
+                                ? 'bg-white/5 hover:bg-white/10'
+                                : 'bg-white/5 opacity-50 cursor-not-allowed'
+                            }`}
+                            title={
+                              isPremiumRequired
+                                ? 'Will switch to this playlist on your active Spotify device'
+                                : undefined
+                            }
+                          >
+                            <div className="flex items-center gap-3">
+                              {playlist.images[0] && (
+                                <img
+                                  src={playlist.images[0].url}
+                                  alt={playlist.name}
+                                  className="w-8 h-8 rounded object-cover flex-shrink-0"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="text-white/90 text-sm font-medium truncate">
+                                  {playlist.name}
+                                </div>
+                                <div className="text-white/50 text-xs">
+                                  {playlist.tracks.total} tracks
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </button>
-                      ))}
+                          </button>
+                        ))}
+                      </div>
+                      {playlists.length > 4 && (
+                        <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-black/60 to-transparent pointer-events-none rounded-b-lg" />
+                      )}
                     </div>
                   </div>
                 ) : (
