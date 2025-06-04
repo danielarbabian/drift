@@ -29,15 +29,15 @@
       opacity: 0.3;
     }
     25% {
-      transform: translateX(5%) translateY(-3%) rotate(90deg) scale(1.1);
+      transform: translateX(5%) translateY(-3%) rotate(45deg) scale(1.1);
       opacity: 0.2;
     }
     50% {
-      transform: translateX(-3%) translateY(5%) rotate(180deg) scale(0.9);
+      transform: translateX(-3%) translateY(5%) rotate(75deg) scale(0.9);
       opacity: 0.4;
     }
     75% {
-      transform: translateX(-5%) translateY(-2%) rotate(270deg) scale(1.05);
+      transform: translateX(-5%) translateY(-2%) rotate(45deg) scale(1.05);
       opacity: 0.25;
     }
   }
@@ -49,15 +49,15 @@
       opacity: 0.2;
     }
     25% {
-      transform: translateX(-4%) translateY(4%) rotate(-90deg) scale(0.95);
+      transform: translateX(-4%) translateY(4%) rotate(-45deg) scale(0.95);
       opacity: 0.35;
     }
     50% {
-      transform: translateX(4%) translateY(-4%) rotate(-180deg) scale(1.1);
+      transform: translateX(4%) translateY(-4%) rotate(-75deg) scale(1.1);
       opacity: 0.15;
     }
     75% {
-      transform: translateX(3%) translateY(3%) rotate(-270deg) scale(0.9);
+      transform: translateX(3%) translateY(3%) rotate(-45deg) scale(0.9);
       opacity: 0.3;
     }
   }
@@ -79,16 +79,16 @@
       transform: translateX(10vw) translateY(10vh) rotate(0deg);
     }
     25% {
-      transform: translateX(80vw) translateY(20vh) rotate(90deg);
+      transform: translateX(80vw) translateY(20vh) rotate(45deg);
     }
     50% {
-      transform: translateX(70vw) translateY(70vh) rotate(180deg);
+      transform: translateX(70vw) translateY(70vh) rotate(75deg);
     }
     75% {
-      transform: translateX(20vw) translateY(80vh) rotate(270deg);
+      transform: translateX(20vw) translateY(80vh) rotate(45deg);
     }
     100% {
-      transform: translateX(10vw) translateY(10vh) rotate(360deg);
+      transform: translateX(10vw) translateY(10vh) rotate(0deg);
     }
   }
 
@@ -97,16 +97,16 @@
       transform: translateX(80vw) translateY(80vh) rotate(0deg);
     }
     25% {
-      transform: translateX(20vw) translateY(70vh) rotate(-90deg);
+      transform: translateX(20vw) translateY(70vh) rotate(-45deg);
     }
     50% {
-      transform: translateX(30vw) translateY(20vh) rotate(-180deg);
+      transform: translateX(30vw) translateY(20vh) rotate(-75deg);
     }
     75% {
-      transform: translateX(75vw) translateY(30vh) rotate(-270deg);
+      transform: translateX(75vw) translateY(30vh) rotate(-45deg);
     }
     100% {
-      transform: translateX(80vw) translateY(80vh) rotate(-360deg);
+      transform: translateX(80vw) translateY(80vh) rotate(0deg);
     }
   }
 
@@ -115,16 +115,16 @@
       transform: translateX(20vw) translateY(70vh) rotate(0deg);
     }
     25% {
-      transform: translateX(80vw) translateY(80vh) rotate(90deg);
+      transform: translateX(80vw) translateY(80vh) rotate(45deg);
     }
     50% {
-      transform: translateX(70vw) translateY(20vh) rotate(180deg);
+      transform: translateX(70vw) translateY(20vh) rotate(75deg);
     }
     75% {
-      transform: translateX(10vw) translateY(10vh) rotate(270deg);
+      transform: translateX(10vw) translateY(10vh) rotate(45deg);
     }
     100% {
-      transform: translateX(20vw) translateY(70vh) rotate(360deg);
+      transform: translateX(20vw) translateY(70vh) rotate(0deg);
     }
   }
 
