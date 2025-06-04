@@ -282,3 +282,83 @@ export async function playPlaylist(playlistUri: string, deviceId?: string) {
 export async function getSpotifyAccessTokenForClient() {
   return await getSpotifyAccessToken();
 }
+
+export async function getUserProfile() {
+  try {
+    const accessToken = await getSpotifyAccessToken();
+
+    if (!accessToken) {
+      return { success: false, error: 'No access token' };
+    }
+
+    const response = await fetch('https://api.spotify.com/v1/me', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (response.status === 200) {
+      const data = await response.json();
+      return { success: true, data };
+    } else if (response.status === 401) {
+      const refreshResult = await refreshSpotifyToken();
+      if (refreshResult.success) {
+        return getUserProfile();
+      }
+      return { success: false, error: 'Authentication failed' };
+    }
+
+    return { success: false, error: 'Failed to fetch user profile' };
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    return { success: false, error: 'Fetch failed' };
+  }
+}
+
+export async function transferPlayback(deviceId: string) {
+  try {
+    const accessToken = await getSpotifyAccessToken();
+
+    if (!accessToken) {
+      return { success: false, error: 'No access token' };
+    }
+
+    console.log('Attempting to transfer playback to device:', deviceId);
+
+    const response = await fetch('https://api.spotify.com/v1/me/player', {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        device_ids: [deviceId],
+        play: false,
+      }),
+    });
+
+    console.log('Transfer playback response status:', response.status);
+
+    if (response.status === 204 || response.status === 200) {
+      return { success: true };
+    } else if (response.status === 401) {
+      const refreshResult = await refreshSpotifyToken();
+      if (refreshResult.success) {
+        return transferPlayback(deviceId);
+      }
+      return { success: false, error: 'Authentication failed' };
+    } else if (response.status === 404) {
+      return {
+        success: false,
+        error: 'Device not found - try again in a moment',
+      };
+    } else {
+      const errorText = await response.text();
+      console.log('Transfer playback error response:', errorText);
+      return { success: false, error: `Transfer failed: ${response.status}` };
+    }
+  } catch (error) {
+    console.error('Error transferring playback:', error);
+    return { success: false, error: 'Transfer failed' };
+  }
+}

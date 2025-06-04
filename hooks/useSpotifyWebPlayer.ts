@@ -13,6 +13,23 @@ declare global {
   }
 }
 
+interface SpotifyTrack {
+  id: string;
+  name: string;
+  artists: { name: string }[];
+  album: {
+    name: string;
+    images: { url: string; width: number; height: number }[];
+  };
+  duration_ms: number;
+}
+
+interface SpotifyPlayerState {
+  is_playing: boolean;
+  progress_ms: number;
+  item: SpotifyTrack | null;
+}
+
 interface SpotifyPlayer {
   addListener: (event: string, callback: (data: any) => void) => void;
   connect: () => Promise<boolean>;
@@ -33,15 +50,23 @@ export function useSpotifyWebPlayer(accessToken: string | null) {
   const [player, setPlayer] = useState<SpotifyPlayer | null>(null);
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isPremiumRequired, setIsPremiumRequired] = useState(false);
+  const [currentTrack, setCurrentTrack] = useState<SpotifyPlayerState | null>(
+    null
+  );
+  const [localPosition, setLocalPosition] = useState(0);
 
-  const loadSDK = useCallback(() => {
-    if (isSDKLoaded || document.querySelector('script[src*="sdk.scdn.co"]')) {
-      setIsSDKLoaded(true);
-      return;
-    }
+  useEffect(() => {
+    if (!currentTrack?.is_playing) return;
+
+    const interval = setInterval(() => {
+      setLocalPosition((prev) => prev + 300);
+    }, 300);
+
+    return () => clearInterval(interval);
+  }, [currentTrack?.is_playing]);
+
+  useEffect(() => {
+    if (!accessToken) return;
 
     const script = document.createElement('script');
     script.src = 'https://sdk.scdn.co/spotify-player.js';
@@ -49,84 +74,78 @@ export function useSpotifyWebPlayer(accessToken: string | null) {
     document.body.appendChild(script);
 
     window.onSpotifyWebPlaybackSDKReady = () => {
-      setIsSDKLoaded(true);
+      const newPlayer = new window.Spotify.Player({
+        name: 'drift',
+        getOAuthToken: (cb) => cb(accessToken),
+        volume: 0.5,
+      });
+
+      newPlayer.addListener('ready', ({ device_id }) => {
+        setDeviceId(device_id);
+        setIsReady(true);
+      });
+
+      newPlayer.addListener('not_ready', ({ device_id }) => {
+        setIsReady(false);
+      });
+
+      newPlayer.addListener('player_state_changed', (state) => {
+        if (!state) {
+          setCurrentTrack(null);
+          setLocalPosition(0);
+          return;
+        }
+
+        const track = state.track_window.current_track;
+        if (!track) {
+          setCurrentTrack(null);
+          setLocalPosition(0);
+          return;
+        }
+
+        setLocalPosition(state.position);
+
+        setCurrentTrack({
+          is_playing: !state.paused,
+          progress_ms: state.position,
+          item: {
+            id: track.id,
+            name: track.name,
+            artists: track.artists.map((artist: any) => ({
+              name: artist.name,
+            })),
+            album: {
+              name: track.album.name,
+              images: track.album.images || [],
+            },
+            duration_ms: track.duration_ms,
+          },
+        });
+      });
+
+      newPlayer.connect();
+      setPlayer(newPlayer);
     };
-  }, [isSDKLoaded]);
 
-  const initializePlayer = useCallback(() => {
-    if (!window.Spotify || !accessToken || player) return;
-
-    const newPlayer = new window.Spotify.Player({
-      name: 'drift',
-      getOAuthToken: (cb) => {
-        cb(accessToken);
-      },
-      volume: 0.5,
-    });
-
-    newPlayer.addListener('ready', ({ device_id }) => {
-      setDeviceId(device_id);
-      setIsReady(true);
-      setError(null);
-      setIsPremiumRequired(false);
-    });
-
-    newPlayer.addListener('not_ready', ({ device_id }) => {
-      setIsReady(false);
-    });
-
-    newPlayer.addListener('initialization_error', ({ message }) => {
-      console.error('Failed to initialize:', message);
-      setError(message);
-    });
-
-    newPlayer.addListener('authentication_error', ({ message }) => {
-      console.error('Failed to authenticate:', message);
-      setError(message);
-    });
-
-    newPlayer.addListener('account_error', ({ message }) => {
-      console.error('Failed to validate Spotify account:', message);
-      setError(message);
-      if (message.includes('premium users only')) {
-        setIsPremiumRequired(true);
-      }
-    });
-
-    newPlayer.addListener('playback_error', ({ message }) => {
-      console.error('Failed to perform playback:', message);
-      setError(message);
-    });
-
-    newPlayer.connect();
-    setPlayer(newPlayer);
-  }, [accessToken, player]);
-
-  useEffect(() => {
-    loadSDK();
-  }, [loadSDK]);
-
-  useEffect(() => {
-    if (isSDKLoaded && accessToken && !player) {
-      const initTimeout = setTimeout(initializePlayer, 100);
-      return () => clearTimeout(initTimeout);
-    }
-  }, [isSDKLoaded, accessToken, player, initializePlayer]);
-
-  useEffect(() => {
     return () => {
       if (player) {
         player.disconnect();
       }
     };
-  }, [player]);
+  }, [accessToken]);
+
+  const currentTrackWithLivePosition = currentTrack
+    ? {
+        ...currentTrack,
+        progress_ms: localPosition,
+      }
+    : null;
 
   return {
     player,
     deviceId,
     isReady,
-    isSDKLoaded,
-    error,
-    isPremiumRequired,
+    currentTrack: currentTrackWithLivePosition,
+    isPremiumRequired: false,
   };
 }

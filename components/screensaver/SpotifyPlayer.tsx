@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import {
   Play,
   Pause,
@@ -28,6 +28,27 @@ function SpotifyPlayerComponent({ showControls }: SpotifyPlayerProps) {
     skipTrack,
     startPlaylist,
   } = useSpotify();
+
+  const [playlistError, setPlaylistError] = useState<string | null>(null);
+  const [loadingPlaylist, setLoadingPlaylist] = useState<string | null>(null);
+
+  const handlePlaylistClick = async (playlist: any) => {
+    setLoadingPlaylist(playlist.id);
+    setPlaylistError(null);
+
+    try {
+      const result = await startPlaylist(playlist.uri);
+      if (!result.success) {
+        setPlaylistError(result.error || 'Failed to start playlist');
+        setTimeout(() => setPlaylistError(null), 5000);
+      }
+    } catch (error) {
+      setPlaylistError('Error starting playlist');
+      setTimeout(() => setPlaylistError(null), 5000);
+    } finally {
+      setLoadingPlaylist(null);
+    }
+  };
 
   if (isLoading) {
     return null;
@@ -79,10 +100,11 @@ function SpotifyPlayerComponent({ showControls }: SpotifyPlayerProps) {
                 {isPremiumRequired ? (
                   <div className="mb-3">
                     <div className="text-orange-400 text-xs mb-1 font-medium">
-                      Premium Required
+                      Web Player Issue
                     </div>
                     <div className="text-white/60 text-xs mb-3 leading-tight">
-                      Play in Spotify app, use controls to switch playlists
+                      If you have Premium, try playing music in the Spotify app
+                      first, then use these controls
                     </div>
                   </div>
                 ) : (
@@ -104,7 +126,7 @@ function SpotifyPlayerComponent({ showControls }: SpotifyPlayerProps) {
                       {webPlayerReady &&
                         !isPremiumRequired &&
                         ' • Ready to Play'}
-                      {isPremiumRequired && ' • Controls Only'}
+                      {isPremiumRequired && ' • App Controls'}
                     </div>
                     <div className="relative">
                       <div className="max-h-52 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent hover:scrollbar-thumb-white/30">
@@ -112,13 +134,20 @@ function SpotifyPlayerComponent({ showControls }: SpotifyPlayerProps) {
                           <button
                             key={playlist.id}
                             onClick={async () => {
-                              await startPlaylist(playlist.uri);
+                              await handlePlaylistClick(playlist);
                             }}
-                            disabled={!webPlayerReady && !isPremiumRequired}
+                            disabled={
+                              (!webPlayerReady && !isPremiumRequired) ||
+                              loadingPlaylist === playlist.id
+                            }
                             className={`w-full text-left p-2 rounded-lg transition-colors cursor-pointer ${
                               webPlayerReady || isPremiumRequired
                                 ? 'bg-white/5 hover:bg-white/10'
                                 : 'bg-white/5 opacity-50 cursor-not-allowed'
+                            } ${
+                              loadingPlaylist === playlist.id
+                                ? 'opacity-50'
+                                : ''
                             }`}
                             title={
                               isPremiumRequired
@@ -136,7 +165,9 @@ function SpotifyPlayerComponent({ showControls }: SpotifyPlayerProps) {
                               )}
                               <div className="flex-1 min-w-0">
                                 <div className="text-white/90 text-sm font-medium truncate">
-                                  {playlist.name}
+                                  {loadingPlaylist === playlist.id
+                                    ? 'Starting...'
+                                    : playlist.name}
                                 </div>
                                 <div className="text-white/50 text-xs">
                                   {playlist.tracks.total} tracks
@@ -150,6 +181,13 @@ function SpotifyPlayerComponent({ showControls }: SpotifyPlayerProps) {
                         <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-black/60 to-transparent pointer-events-none rounded-b-lg" />
                       )}
                     </div>
+                    {playlistError && (
+                      <div className="mt-3 p-2 bg-red-500/20 border border-red-500/30 rounded-lg">
+                        <div className="text-red-300 text-xs">
+                          {playlistError}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-white/60 text-sm">
