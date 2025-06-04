@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'OLED Screensaver',
-  description: 'Ambient productivity screensaver with burn-in protection',
+  title: 'drift',
+  description: 'An elegant OLED screensaver with integrated productivity tools',
 };
 
 export default function RootLayout({

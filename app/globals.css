@@ -110,6 +110,24 @@
     }
   }
 
+  @keyframes orbit-offset {
+    0% {
+      transform: translateX(20vw) translateY(70vh) rotate(0deg);
+    }
+    25% {
+      transform: translateX(80vw) translateY(80vh) rotate(90deg);
+    }
+    50% {
+      transform: translateX(70vw) translateY(20vh) rotate(180deg);
+    }
+    75% {
+      transform: translateX(10vw) translateY(10vh) rotate(270deg);
+    }
+    100% {
+      transform: translateX(20vw) translateY(70vh) rotate(360deg);
+    }
+  }
+
   @keyframes float {
     0%,
     100% {
@@ -175,6 +193,10 @@
 
   .animate-orbit-reverse {
     animation: orbit-reverse 140s linear infinite;
+  }
+
+  .animate-orbit-offset {
+    animation: orbit-offset 120s linear infinite;
   }
 
   .animate-float {

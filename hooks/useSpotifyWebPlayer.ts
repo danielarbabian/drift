@@ -57,7 +57,7 @@ export function useSpotifyWebPlayer(accessToken: string | null) {
     if (!window.Spotify || !accessToken || player) return;
 
     const newPlayer = new window.Spotify.Player({
-      name: 'OLED Screensaver',
+      name: 'drift',
       getOAuthToken: (cb) => {
         cb(accessToken);
       },

@@ -1,4 +1,3 @@
-import { X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -15,6 +14,8 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { useState, useEffect } from 'react';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -31,6 +32,8 @@ interface SettingsDialogProps {
   setShowSpotifyPlayer: (show: boolean) => void;
   showPomodoroTimer: boolean;
   setShowPomodoroTimer: (show: boolean) => void;
+  showTodoList: boolean;
+  setShowTodoList: (show: boolean) => void;
 }
 
 export function SettingsDialog({
@@ -48,13 +51,98 @@ export function SettingsDialog({
   setShowSpotifyPlayer,
   showPomodoroTimer,
   setShowPomodoroTimer,
+  showTodoList,
+  setShowTodoList,
 }: SettingsDialogProps) {
+  const [customWorkDuration, setCustomWorkDuration] = useState('');
+  const [customBreakDuration, setCustomBreakDuration] = useState('');
+  const [isCustomWorkSelected, setIsCustomWorkSelected] = useState(false);
+  const [isCustomBreakSelected, setIsCustomBreakSelected] = useState(false);
+
+  const presetWorkDurations = [20, 25, 30, 45];
+  const presetBreakDurations = [5, 10, 15];
+
+  const isCustomWorkDuration =
+    isCustomWorkSelected || !presetWorkDurations.includes(workDuration / 60);
+  const isCustomBreakDuration =
+    isCustomBreakSelected || !presetBreakDurations.includes(breakDuration / 60);
+
+  useEffect(() => {
+    if (isCustomWorkDuration) {
+      setCustomWorkDuration(String(workDuration / 60));
+    }
+  }, [workDuration, isCustomWorkDuration]);
+
+  useEffect(() => {
+    if (isCustomBreakDuration) {
+      setCustomBreakDuration(String(breakDuration / 60));
+    }
+  }, [breakDuration, isCustomBreakDuration]);
+
+  useEffect(() => {
+    if (presetWorkDurations.includes(workDuration / 60)) {
+      setIsCustomWorkSelected(false);
+    }
+  }, [workDuration]);
+
+  useEffect(() => {
+    if (presetBreakDurations.includes(breakDuration / 60)) {
+      setIsCustomBreakSelected(false);
+    }
+  }, [breakDuration]);
+
+  const validateAndSetWorkDuration = (value: string) => {
+    const num = parseInt(value);
+    if (!isNaN(num) && num >= 1 && num <= 120) {
+      setWorkDuration(num * 60);
+    }
+  };
+
+  const validateAndSetBreakDuration = (value: string) => {
+    const num = parseInt(value);
+    if (!isNaN(num) && num >= 1 && num <= 60) {
+      setBreakDuration(num * 60);
+    }
+  };
+
   const handleWorkDurationChange = (value: string) => {
-    setWorkDuration(parseInt(value) * 60);
+    if (value === 'custom') {
+      setIsCustomWorkSelected(true);
+      setCustomWorkDuration(String(workDuration / 60));
+    } else {
+      setIsCustomWorkSelected(false);
+      setWorkDuration(parseInt(value) * 60);
+    }
   };
 
   const handleBreakDurationChange = (value: string) => {
-    setBreakDuration(parseInt(value) * 60);
+    if (value === 'custom') {
+      setIsCustomBreakSelected(true);
+      setCustomBreakDuration(String(breakDuration / 60));
+    } else {
+      setIsCustomBreakSelected(false);
+      setBreakDuration(parseInt(value) * 60);
+    }
+  };
+
+  const handleCustomWorkDurationChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = e.target.value;
+    setCustomWorkDuration(value);
+    if (value) {
+      validateAndSetWorkDuration(value);
+    }
+  };
+
+  const handleCustomBreakDurationChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = e.target.value;
+    setCustomBreakDuration(value);
+    if (value) {
+      validateAndSetBreakDuration(value);
+    }
   };
 
   const handleClockAnimationChange = (value: string) => {
@@ -137,7 +225,9 @@ export function SettingsDialog({
                   Work Duration
                 </label>
                 <Select
-                  value={String(workDuration / 60)}
+                  value={
+                    isCustomWorkDuration ? 'custom' : String(workDuration / 60)
+                  }
                   onValueChange={handleWorkDurationChange}
                 >
                   <SelectTrigger className="bg-white/10 border-white/20 text-white/80 rounded-xl">
@@ -168,15 +258,39 @@ export function SettingsDialog({
                     >
                       45 minutes
                     </SelectItem>
+                    <SelectItem
+                      value="custom"
+                      className="text-white focus:bg-white/20 focus:text-white data-[highlighted]:bg-white/20 data-[highlighted]:text-white rounded-lg"
+                    >
+                      Custom
+                    </SelectItem>
                   </SelectContent>
                 </Select>
+                {isCustomWorkDuration && (
+                  <div className="mt-2">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="120"
+                      value={customWorkDuration}
+                      onChange={handleCustomWorkDurationChange}
+                      placeholder="Minutes (1-120)"
+                      className="bg-white/10 border-white/20 text-white/80 placeholder:text-white/40 rounded-xl"
+                    />
+                    <p className="text-white/40 text-xs mt-1">1-120 minutes</p>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-white/60 text-sm block mb-1">
                   Break Duration
                 </label>
                 <Select
-                  value={String(breakDuration / 60)}
+                  value={
+                    isCustomBreakDuration
+                      ? 'custom'
+                      : String(breakDuration / 60)
+                  }
                   onValueChange={handleBreakDurationChange}
                 >
                   <SelectTrigger className="bg-white/10 border-white/20 text-white/80 rounded-xl">
@@ -201,8 +315,28 @@ export function SettingsDialog({
                     >
                       15 minutes
                     </SelectItem>
+                    <SelectItem
+                      value="custom"
+                      className="text-white focus:bg-white/20 focus:text-white data-[highlighted]:bg-white/20 data-[highlighted]:text-white rounded-lg"
+                    >
+                      Custom
+                    </SelectItem>
                   </SelectContent>
                 </Select>
+                {isCustomBreakDuration && (
+                  <div className="mt-2">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="60"
+                      value={customBreakDuration}
+                      onChange={handleCustomBreakDurationChange}
+                      placeholder="Minutes (1-60)"
+                      className="bg-white/10 border-white/20 text-white/80 placeholder:text-white/40 rounded-xl"
+                    />
+                    <p className="text-white/40 text-xs mt-1">1-60 minutes</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -236,6 +370,16 @@ export function SettingsDialog({
                   id="pomodoro-toggle"
                   checked={showPomodoroTimer}
                   onCheckedChange={setShowPomodoroTimer}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="todo-toggle" className="text-white/80 text-sm">
+                  Todo List
+                </Label>
+                <Switch
+                  id="todo-toggle"
+                  checked={showTodoList}
+                  onCheckedChange={setShowTodoList}
                 />
               </div>
             </div>

@@ -5,6 +5,7 @@ import { Clock } from '@/components/screensaver/Clock';
 import { FloatingParticles } from '@/components/screensaver/FloatingParticles';
 import { PomodoroTimer } from '@/components/screensaver/PomodoroTimer';
 import { SpotifyPlayer } from '@/components/screensaver/SpotifyPlayer';
+import { TodoList } from '@/components/screensaver/TodoList';
 import { SettingsDialog } from '@/components/screensaver/SettingsDialog';
 import { InfoDialog } from '@/components/screensaver/InfoDialog';
 import { ControlButtons } from '@/components/screensaver/ControlButtons';
@@ -45,14 +46,25 @@ export default function OLEDScreensaver() {
     'screensaver-showPomodoroTimer',
     true
   );
+  const [showTodoList, setShowTodoList] = useLocalStorage(
+    'screensaver-showTodoList',
+    true
+  );
 
   const { showControls, isFullscreen, toggleFullscreen } =
     useScreensaverControls();
-  const { pomodoroTime, isBreak, cycle, isPaused, resetPomodoro, togglePause } =
-    usePomodoroTimer({
-      workDuration,
-      breakDuration,
-    });
+  const {
+    pomodoroTime,
+    isBreak,
+    cycle,
+    isPaused,
+    isCompleted,
+    resetPomodoro,
+    togglePause,
+  } = usePomodoroTimer({
+    workDuration,
+    breakDuration,
+  });
 
   useEffect(() => {
     setIsClient(true);
@@ -105,6 +117,7 @@ export default function OLEDScreensaver() {
           isBreak={isBreak}
           cycle={cycle}
           isPaused={isPaused}
+          isCompleted={isCompleted}
           showControls={showControls}
           workDuration={workDuration}
           breakDuration={breakDuration}
@@ -138,11 +151,13 @@ export default function OLEDScreensaver() {
         setShowSpotifyPlayer={setShowSpotifyPlayer}
         showPomodoroTimer={showPomodoroTimer}
         setShowPomodoroTimer={setShowPomodoroTimer}
+        showTodoList={showTodoList}
+        setShowTodoList={setShowTodoList}
       />
 
       <InfoDialog open={showInfo} onOpenChange={setShowInfo} />
 
-      <CornerIndicators />
+      {showTodoList && <TodoList showControls={showControls} />}
     </div>
   );
 }
